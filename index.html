@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GameFlix</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body { margin:0; font-family:Arial; background:#141414; color:white; }
+
+/* NAVBAR */
+.navbar {
+  display:flex;
+  justify-content:space-between;
+  padding:10px;
+  background:black;
+}
+
+.logo { color:red; font-size:22px; }
+
+/* SEARCH */
+input {
+  padding:6px;
+  border-radius:5px;
+  border:none;
+}
+
+/* GRID */
+.grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+  gap:15px;
+  padding:15px;
+}
+
+.card {
+  background:#222;
+  border-radius:8px;
+  overflow:hidden;
+  cursor:pointer;
+  transition:.2s;
+}
+
+.card:hover { transform:scale(1.05); }
+
+.card img {
+  width:100%;
+  height:100px;
+  object-fit:cover;
+}
+
+.card p { text-align:center; }
+
+/* PLAYER */
+#player {
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100%;
+  background:black;
+  display:none;
+}
+
+iframe { width:100%; height:100%; border:none; }
+
+#close {
+  position:absolute;
+  top:10px;
+  left:10px;
+  padding:10px;
+  background:red;
+  border:none;
+  color:white;
+}
+
+/* FAVORITES */
+#favBtn {
+  margin-left:10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="navbar">
+  <div class="logo">🎮 GameFlix</div>
+  <div>
+    <input id="search" placeholder="Search...">
+    <button id="favBtn" onclick="showFav()">⭐</button>
+  </div>
+</div>
+
+<div class="grid" id="games"></div>
+
+<div id="player">
+  <button id="close" onclick="closeGame()">X</button>
+  <iframe id="frame"></iframe>
+</div>
+
+<script>
+// GENERATE 100 GAMES
+let games = [];
+
+for(let i=1;i<=100;i++){
+  games.push({
+    name:"Game "+i,
+    url:"https://example.com",
+    img:"https://via.placeholder.com/300x150?text=Game+"+i
+  });
+}
+
+// LOAD
+const container = document.getElementById("games");
+
+function render(list){
+  container.innerHTML="";
+  list.forEach(g=>{
+    let div=document.createElement("div");
+    div.className="card";
+    div.innerHTML=`<img src="${g.img}"><p>${g.name}</p>`;
+    div.onclick=()=>play(g.url);
+
+    div.oncontextmenu=(e)=>{
+      e.preventDefault();
+      addFav(g);
+    };
+
+    container.appendChild(div);
+  });
+}
+
+render(games);
+
+// SEARCH
+search.oninput=()=>{
+  let val=search.value.toLowerCase();
+  let filtered=games.filter(g=>g.name.toLowerCase().includes(val));
+  render(filtered);
+};
+
+// PLAYER
+function play(url){
+  player.style.display="block";
+  frame.src=url;
+}
+
+function closeGame(){
+  player.style.display="none";
+  frame.src="";
+}
+
+// FAVORITES
+function addFav(game){
+  let fav=JSON.parse(localStorage.getItem("fav")||"[]");
+
+  if(!fav.find(f=>f.name===game.name)){
+    fav.push(game);
+    localStorage.setItem("fav",JSON.stringify(fav));
+    alert("Added to favorites");
+  }
+}
+
+function showFav(){
+  let fav=JSON.parse(localStorage.getItem("fav")||"[]");
+  render(fav);
+}
+</script>
+
+</body>
+</html>
