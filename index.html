@@ -2,46 +2,85 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>GameFlix</title>
+<title>GameVault</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body { margin:0; font-family:Arial; background:#141414; color:white; }
+body {
+  margin:0;
+  font-family: Arial, sans-serif;
+  background:#0b1020;
+  color:white;
+}
+
+/* LOGIN */
+#loginPage {
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  background:#0b1020;
+}
+
+input {
+  padding:10px;
+  margin:5px;
+  border:none;
+  border-radius:6px;
+}
 
 /* NAVBAR */
 .navbar {
   display:flex;
   justify-content:space-between;
-  padding:10px;
-  background:black;
+  padding:12px;
+  background:#111827;
+  position:sticky;
+  top:0;
 }
 
-.logo { color:red; font-size:22px; }
+.logo {
+  color:#00ffcc;
+  font-weight:bold;
+}
 
 /* SEARCH */
-input {
+#search {
   padding:6px;
-  border-radius:5px;
+  border-radius:6px;
   border:none;
 }
 
 /* GRID */
-.grid {
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
-  gap:15px;
-  padding:15px;
+.row {
+  margin:20px;
+}
+
+.row h2 {
+  margin-bottom:10px;
+}
+
+.row-games {
+  display:flex;
+  overflow-x:auto;
+  gap:10px;
+  padding-bottom:10px;
 }
 
 .card {
-  background:#222;
-  border-radius:8px;
+  min-width:160px;
+  background:#111827;
+  border-radius:10px;
   overflow:hidden;
   cursor:pointer;
-  transition:.2s;
+  transition:0.2s;
 }
 
-.card:hover { transform:scale(1.05); }
+.card:hover {
+  transform:scale(1.07);
+  border:1px solid #00ffcc;
+}
 
 .card img {
   width:100%;
@@ -49,7 +88,11 @@ input {
   object-fit:cover;
 }
 
-.card p { text-align:center; }
+.card p {
+  text-align:center;
+  font-size:13px;
+  padding:5px;
+}
 
 /* PLAYER */
 #player {
@@ -60,84 +103,183 @@ input {
   display:none;
 }
 
-iframe { width:100%; height:100%; border:none; }
+iframe {
+  width:100%;
+  height:100%;
+  border:none;
+}
 
 #close {
   position:absolute;
   top:10px;
   left:10px;
-  padding:10px;
   background:red;
-  border:none;
   color:white;
+  padding:10px;
+  border:none;
 }
 
-/* FAVORITES */
-#favBtn {
-  margin-left:10px;
+/* DASHBOARD */
+#dashboard {
+  display:none;
+  padding:20px;
+}
+
+.panel {
+  background:#111827;
+  padding:15px;
+  border-radius:10px;
+  margin-bottom:10px;
 }
 </style>
 </head>
 
 <body>
 
+<!-- LOGIN -->
+<div id="loginPage">
+  <h1>🎮 GameVault Login</h1>
+  <input id="username" placeholder="Username">
+  <button onclick="login()">Enter</button>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" style="display:none;">
+
 <div class="navbar">
-  <div class="logo">🎮 GameFlix</div>
+  <div class="logo">GameVault</div>
   <div>
-    <input id="search" placeholder="Search...">
-    <button id="favBtn" onclick="showFav()">⭐</button>
+    <input id="search" placeholder="Search games...">
+    <button onclick="toggleDashboard()">📊</button>
+    <button onclick="showFav()">⭐</button>
   </div>
 </div>
 
-<div class="grid" id="games"></div>
+<div id="content"></div>
 
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <div class="panel">
+    <h2>📊 Analytics (local)</h2>
+    <p>Total game clicks: <span id="clicks">0</span></p>
+  </div>
+
+  <div class="panel">
+    <h2>👤 User</h2>
+    <p id="userDisplay"></p>
+  </div>
+</div>
+
+</div>
+
+<!-- PLAYER -->
 <div id="player">
   <button id="close" onclick="closeGame()">X</button>
   <iframe id="frame"></iframe>
 </div>
 
 <script>
-// GENERATE 100 GAMES
-let games = [];
 
-for(let i=1;i<=100;i++){
+/* ---------------- LOGIN ---------------- */
+function login(){
+  const u = username.value.trim();
+  if(!u) return;
+
+  localStorage.setItem("user", u);
+  loginPage.style.display="none";
+  app.style.display="block";
+
+  userDisplay.innerText = "Logged in as: " + u;
+
+  loadGames();
+}
+
+if(localStorage.getItem("user")){
+  loginPage.style.display="none";
+  app.style.display="block";
+  userDisplay.innerText = "Logged in as: " + localStorage.getItem("user");
+}
+
+/* ---------------- ANALYTICS ---------------- */
+let clicks = parseInt(localStorage.getItem("clicks")||"0");
+function addClick(){
+  clicks++;
+  localStorage.setItem("clicks", clicks);
+  document.getElementById("clicks").innerText = clicks;
+}
+document.getElementById("clicks").innerText = clicks;
+
+/* ---------------- GAME DATABASE (100+) ---------------- */
+const games = [];
+
+const baseGames = [
+  {name:"Slope", url:"https://html5.gamedistribution.com/rvvASMiM/6b1c9f6e4cde4b7bb0f1c5d6a5a5a111/index.html"},
+  {name:"Stack", url:"https://html5.gamedistribution.com/rvvASMiM/stack/index.html"},
+  {name:"Tunnel Rush", url:"https://html5.gamedistribution.com/rvvASMiM/tunnel-rush/index.html"},
+  {name:"Drift Boss", url:"https://html5.gamedistribution.com/rvvASMiM/drift-boss/index.html"},
+  {name:"Moto X3M", url:"https://html5.gamedistribution.com/rvvASMiM/moto-x3m/index.html"}
+];
+
+// expand to 100 games automatically
+for(let i=0;i<100;i++){
+  let g = baseGames[i % baseGames.length];
   games.push({
-    name:"Game "+i,
-    url:"https://example.com",
-    img:"https://via.placeholder.com/300x150?text=Game+"+i
+    name: g.name + " " + (i+1),
+    url: g.url,
+    img: "https://via.placeholder.com/300x150/111827/00ffcc?text="+encodeURIComponent(g.name)
   });
 }
 
-// LOAD
-const container = document.getElementById("games");
+/* ---------------- RENDER ---------------- */
+const content = document.getElementById("content");
 
 function render(list){
-  container.innerHTML="";
-  list.forEach(g=>{
-    let div=document.createElement("div");
-    div.className="card";
-    div.innerHTML=`<img src="${g.img}"><p>${g.name}</p>`;
-    div.onclick=()=>play(g.url);
+  content.innerHTML="";
 
-    div.oncontextmenu=(e)=>{
+  const row = document.createElement("div");
+  row.className="row";
+  row.innerHTML="<h2>🎮 Games</h2><div class='row-games'></div>";
+
+  const container = row.querySelector(".row-games");
+
+  list.forEach(g=>{
+    const card = document.createElement("div");
+    card.className="card";
+
+    card.innerHTML = `
+      <img src="${g.img}">
+      <p>${g.name}</p>
+    `;
+
+    card.onclick = ()=>{
+      play(g.url);
+      addClick();
+    };
+
+    card.oncontextmenu = (e)=>{
       e.preventDefault();
       addFav(g);
     };
 
-    container.appendChild(div);
+    container.appendChild(card);
   });
+
+  row.querySelector(".row-games").replaceWith(container);
+  content.appendChild(row);
 }
 
-render(games);
+function loadGames(){
+  render(games);
+}
+loadGames();
 
-// SEARCH
-search.oninput=()=>{
-  let val=search.value.toLowerCase();
-  let filtered=games.filter(g=>g.name.toLowerCase().includes(val));
-  render(filtered);
+/* ---------------- SEARCH ---------------- */
+search.oninput = ()=>{
+  let v = search.value.toLowerCase();
+  render(games.filter(g=>g.name.toLowerCase().includes(v)));
 };
 
-// PLAYER
+/* ---------------- PLAYER ---------------- */
 function play(url){
   player.style.display="block";
   frame.src=url;
@@ -148,20 +290,29 @@ function closeGame(){
   frame.src="";
 }
 
-// FAVORITES
+/* ---------------- FAVORITES (per user) ---------------- */
+function getFavKey(){
+  return "fav_" + localStorage.getItem("user");
+}
+
 function addFav(game){
-  let fav=JSON.parse(localStorage.getItem("fav")||"[]");
+  let fav = JSON.parse(localStorage.getItem(getFavKey())||"[]");
 
   if(!fav.find(f=>f.name===game.name)){
     fav.push(game);
-    localStorage.setItem("fav",JSON.stringify(fav));
+    localStorage.setItem(getFavKey(), JSON.stringify(fav));
     alert("Added to favorites");
   }
 }
 
 function showFav(){
-  let fav=JSON.parse(localStorage.getItem("fav")||"[]");
+  let fav = JSON.parse(localStorage.getItem(getFavKey())||"[]");
   render(fav);
+}
+
+/* ---------------- DASHBOARD ---------------- */
+function toggleDashboard(){
+  dashboard.style.display = dashboard.style.display==="block"?"none":"block";
 }
 </script>
 
